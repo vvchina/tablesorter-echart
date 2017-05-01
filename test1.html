@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8">
+	<title></title>
+	<script src="js/jquery-latest.min.js"></script>
+	<script src="./tablesorter/jquery.tablesorter.js"></script>
+	<script src="./tablesorter/widgets/widget-filter.js"></script>
+	<script src="./tablesorter/widgets/widget-stickyHeaders.js"></script>
+	<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts-all-3.js"></script>
+	<link rel="stylesheet" href="css/jq.css">
+	<link class="theme green" rel="stylesheet" href="./css/theme.green.css">
+	<link rel="stylesheet" href="css/magnific-popup.css">
+	<script src="js/jquery.magnific-popup.min.js"></script>
+	<style id="css">/* wrapper of table 2 */
+		#margindiv, #chartdiv {
+			background:#fff;
+			padding: 0px;
+			margin: 0px;
+			font-size: 11px;
+			font-family: "Microsoft Yahei", "微软雅黑", Tahoma, Arial, Helvetica, STHeiti;
+		}
+		#chart {
+			width: 1000px; 
+			height: 500px;
+			background:#fff;
+			padding: 0px;
+			margin: 0px;
+			font-size: 11px;
+			font-family: "Microsoft Yahei", "微软雅黑", Tahoma, Arial, Helvetica, STHeiti;
+		}
+		.wrapper {
+			position: relative;
+			padding: 0 5px;
+			height: 250px;
+			overflow-y: auto;
+		}
+
+		/* Magnific popup */
+		.popup {
+			position: relative;
+			background: #FFF;
+			padding: 20px;
+			width: auto;
+			margin: 20px auto;
+		}
+/* Since the popup has a 20px margin, we need to adjust the wrapper position
+Note:
+ this is only required because we aren't actually attaching the sticky header
+ to the #popup, instead we're attaching it to the .mfp-wrap because that
+ element scrolls instead of the window
+ */
+ .popup .tablesorter-sticky-wrapper {
+ 	margin-left: 20px;
+ 	margin-top: -20px;
+ }</style>
+ <script type="text/javascript">
+ 	function tableToJson(table) {
+ 		var data = {};
+
+    // first row needs to be headers
+    var headers = [];
+    for (var i=0; i<table.rows[0].cells.length; i++) {
+    	headers[i] = table.rows[0].cells[i].innerText.toLowerCase().replace(/ /gi,'');
+    	data[headers[i]] =[];
+    }
+    data["HEADERS"]=headers;
+
+    // go through cells
+    for (var i=1; i<table.rows.length; i++) {
+
+    	var tableRow = table.rows[i];
+    	if($.trim(tableRow.innerText).length==0) continue;
+    	var rowData = {};
+
+    	for (var j=0; j<tableRow.cells.length; j++) {
+    		data[ headers[j] ].push(tableRow.cells[j].innerText);
+
+    	}
+    }       
+
+    return data;
+}
+
+function createSortedTable(){
+	$(function(){
+							$('#table1').tablesorter({
+							theme : 'green',
+							widthFixed : true,
+							showProcessing: true,
+				headerTemplate : '{content} {icon}', // Add icon for various themes
+
+				widgets: [ 'zebra', 'stickyHeaders', 'filter' ],
+
+				widgetOptions: {
+
+					// extra class name added to the sticky header row
+					stickyHeaders : '',
+					// number or jquery selector targeting the position:fixed element
+					stickyHeaders_offset : 0,
+					// added to table ID, if it exists
+					stickyHeaders_cloneId : '-sticky',
+					// trigger "resize" event on headers
+					stickyHeaders_addResizeEvent : true,
+					// if false and a caption exist, it won't be included in the sticky header
+					stickyHeaders_includeCaption : true,
+					// The zIndex of the stickyHeaders, allows the user to adjust this to their needs
+					stickyHeaders_zIndex : 2,
+					// jQuery selector or object to attach sticky header to
+					stickyHeaders_attachTo : '.mfp-wrap',
+					// jQuery selector or object to monitor horizontal scroll position (defaults: xScroll > attachTo > window)
+					stickyHeaders_xScroll : null,
+					// jQuery selector or object to monitor vertical scroll position (defaults: yScroll > attachTo > window)
+					stickyHeaders_yScroll : null,
+
+					// scroll table top into view after filtering
+					stickyHeaders_filteredToTop: true
+
+					// *** REMOVED jQuery UI theme due to adding an accordion on this demo page ***
+					// adding zebra striping, using content and default styles - the ui css removes the background from default
+					// even and odd class names included for this demo to allow switching themes
+					// , zebra   : ["ui-widget-content even", "ui-state-default odd"]
+					// use uitheme widget to apply defauly jquery ui (jui) class names
+					// see the uitheme demo for more details on how to change the class names
+					// , uitheme : 'jui'
+				}
+			});
+	});
+}
+
+function openchart(table){
+	var dom =  document.getElementById("chart");
+	var myChart = echarts.init(dom);
+	var app = {};
+	option = null;
+	if(table!=null){
+	option = {
+		title: {
+			text: 'chart',
+		},
+		tooltip: {
+			trigger: 'axis'
+		},
+		legend: {
+			data: table['HEADERS'].slice(1),
+			top: 20,
+			selected:{}
+		},
+		toolbox: {
+			show: true,
+			feature: {
+				dataZoom: {
+					yAxisIndex: 'none'
+				},
+				dataView: {readOnly: false},
+				magicType: {type: ['line', 'bar','stack','tiled']},
+				restore: {},
+				saveAsImage: {}
+			}
+		},
+		xAxis:  {
+			type: 'category',
+			boundaryGap: false,
+			data: table[table['HEADERS'][0]]
+		},
+		yAxis: {
+			type: 'value',
+			axisLabel: {
+				formatter: '{value}'
+			}
+		},
+		series: [
+		]
+	};
+	for(var i=1; i<table['HEADERS'].length; i++){
+		option.series.push({
+			name: table['HEADERS'][i],
+			type:'line',
+			data: table[table['HEADERS'][i]]
+		});
+		option.legend.selected[table['HEADERS'][i]]=false;
+	}
+	}
+	
+	;
+	if (option && typeof option === "object") {
+		myChart.setOption(option, true);
+	}
+}
+
+$(function(){
+	$.magnificPopup.open({
+		items: {
+				    src: '#popup', // can be a HTML string, jQuery object, or CSS selector
+				    type: 'inline'
+				},
+				callbacks: {
+					open: function () {
+						createSortedTable();
+				}
+		}
+	});
+	$("#tablelink").magnificPopup({
+		items: {
+				    src: '#popup', // can be a HTML string, jQuery object, or CSS selector
+				    type: 'inline'
+				},
+				callbacks: {
+					open: function () {
+						createSortedTable();
+				}
+		}
+	});
+	$("#chart").hide();
+		openchart(null);
+		$("#chartlink").on('click', function(){
+			$.magnificPopup.instance.close();
+			$("#chart").show();
+
+			if(!$("#chart").is(":hidden")){
+				var table = $('#table1')[0];
+				var json = tableToJson(table);
+				openchart(json);
+			}
+		});
+});
+
+
+
+</script>
+</head>
+<body>
+	<div id="maindiv">
+		<div id="chartheader"><a href="#popup" id='tablelink'>Table</a>
+		<div id="xAxisdiv"></div>
+		<div id="yAxisdiv"></div>
+		</div>
+		<div id="chartdiv">
+		<div href="#chart" id="chart"></div>
+		</div>
+		<div id="popup" class="white-popup mfp-hide">
+		<div id="margindiv"><a href="#chart" id="chartlink">Chart</a></div>
+
+			<table id="table1" class="tablesorter">
+				<thead>
+					<tr><th>Name</th><th>Major</th><th>Sex</th><th>English</th><th>Japanese</th><th>Calculus</th><th>Geometry</th></tr>
+				</thead>
+				<tbody>
+					<tr><td>Student01</td><td>Languages</td><td>male</td><td>80</td><td>70</td><td>75</td><td>80</td></tr>
+					<tr><td>Student02</td><td>Mathematics</td><td>male</td><td>90</td><td>88</td><td>100</td><td>90</td></tr>
+					<tr><td>Student03</td><td>Languages</td><td>female</td><td>85</td><td>95</td><td>80</td><td>85</td></tr>
+					<tr><td>Student04</td><td>Languages</td><td>male</td><td>60</td><td>55</td><td>100</td><td>100</td></tr>
+					<tr><td>Student05</td><td>Languages</td><td>female</td><td>68</td><td>80</td><td>95</td><td>80</td></tr>
+					<tr><td>Student06</td><td>Mathematics</td><td>male</td><td>100</td><td>99</td><td>100</td><td>90</td></tr>
+					<tr><td>Student07</td><td>Mathematics</td><td>male</td><td>85</td><td>68</td><td>90</td><td>90</td></tr>
+					<tr><td>Student08</td><td>Languages</td><td>male</td><td>100</td><td>90</td><td>90</td><td>85</td></tr>
+					<tr><td>Student09</td><td>Mathematics</td><td>male</td><td>80</td><td>50</td><td>65</td><td>75</td></tr>
+					<tr><td>Student10</td><td>Languages</td><td>male</td><td>85</td><td>100</td><td>100</td><td>90</td></tr>
+					<tr><td>Student11</td><td>Languages</td><td>male</td><td>86</td><td>85</td><td>100</td><td>100</td></tr>
+					<tr><td>Student12</td><td>Mathematics</td><td>female</td><td>100</td><td>75</td><td>70</td><td>85</td></tr>
+					<tr><td>Student13</td><td>Languages</td><td>female</td><td>100</td><td>80</td><td>100</td><td>90</td></tr>
+					<tr><td>Student14</td><td>Languages</td><td>female</td><td>50</td><td>45</td><td>55</td><td>90</td></tr>
+					<tr><td>Student15</td><td>Languages</td><td>male</td><td>95</td><td>35</td><td>100</td><td>90</td></tr>
+					<tr><td>Student16</td><td>Languages</td><td>female</td><td>100</td><td>50</td><td>30</td><td>70</td></tr>
+					<tr><td>Student17</td><td>Languages</td><td>female</td><td>80</td><td>100</td><td>55</td><td>65</td></tr>
+					<tr><td>Student18</td><td>Mathematics</td><td>male</td><td>30</td><td>49</td><td>55</td><td>75</td></tr>
+					<tr><td>Student19</td><td>Languages</td><td>male</td><td>68</td><td>90</td><td>88</td><td>70</td></tr>
+					<tr><td>Student20</td><td>Mathematics</td><td>male</td><td>40</td><td>45</td><td>40</td><td>80</td></tr>
+					<tr><td>Student21</td><td>Languages</td><td>male</td><td>50</td><td>45</td><td>100</td><td>100</td></tr>
+					<tr><td>Student22</td><td>Mathematics</td><td>male</td><td>100</td><td>99</td><td>100</td><td>90</td></tr>
+					<tr><td>Student23</td><td>Languages</td><td>female</td><td>85</td><td>80</td><td>80</td><td>80</td></tr>
+					<tr><td>student23</td><td>Mathematics</td><td>male</td><td>82</td><td>77</td><td>0</td><td>79</td></tr>
+					<tr><td>student24</td><td>Languages</td><td>female</td><td>100</td><td>91</td><td>13</td><td>82</td></tr>
+					<tr><td>student25</td><td>Mathematics</td><td>male</td><td>22</td><td>96</td><td>82</td><td>53</td></tr>
+					<tr><td>student26</td><td>Languages</td><td>female</td><td>37</td><td>29</td><td>56</td><td>59</td></tr>
+					<tr><td>student27</td><td>Mathematics</td><td>male</td><td>86</td><td>82</td><td>69</td><td>23</td></tr>
+					<tr><td>student28</td><td>Languages</td><td>female</td><td>44</td><td>25</td><td>43</td><td>1</td></tr>
+					<tr><td>student29</td><td>Mathematics</td><td>male</td><td>77</td><td>47</td><td>22</td><td>38</td></tr>
+					<tr><td>student30</td><td>Languages</td><td>female</td><td>19</td><td>35</td><td>23</td><td>10</td></tr>
+					<tr><td>student31</td><td>Mathematics</td><td>male</td><td>90</td><td>27</td><td>17</td><td>50</td></tr>
+					<tr><td>student32</td><td>Languages</td><td>female</td><td>60</td><td>75</td><td>33</td><td>38</td></tr>
+					<tr><td>student33</td><td>Mathematics</td><td>male</td><td>4</td><td>31</td><td>37</td><td>15</td></tr>
+					<tr><td>student34</td><td>Languages</td><td>female</td><td>77</td><td>97</td><td>81</td><td>44</td></tr>
+					<tr><td>student35</td><td>Mathematics</td><td>male</td><td>5</td><td>81</td><td>51</td><td>95</td></tr>
+					<tr><td>student36</td><td>Languages</td><td>female</td><td>70</td><td>61</td><td>70</td><td>94</td></tr>
+					<tr><td>student37</td><td>Mathematics</td><td>male</td><td>60</td><td>3</td><td>61</td><td>84</td></tr>
+					<tr><td>student38</td><td>Languages</td><td>female</td><td>63</td><td>39</td><td>0</td><td>11</td></tr>
+					<tr><td>student39</td><td>Mathematics</td><td>male</td><td>50</td><td>46</td><td>32</td><td>38</td></tr>
+					<tr><td>student40</td><td>Languages</td><td>female</td><td>51</td><td>75</td><td>25</td><td>3</td></tr>
+					<tr><td>student41</td><td>Mathematics</td><td>male</td><td>43</td><td>34</td><td>28</td><td>78</td></tr>
+					<tr><td>student42</td><td>Languages</td><td>female</td><td>11</td><td>89</td><td>60</td><td>95</td></tr>
+					<tr><td>student43</td><td>Mathematics</td><td>male</td><td>48</td><td>92</td><td>18</td><td>88</td></tr>
+					<tr><td>student44</td><td>Languages</td><td>female</td><td>82</td><td>2</td><td>59</td><td>73</td></tr>
+					<tr><td>student45</td><td>Mathematics</td><td>male</td><td>91</td><td>73</td><td>37</td><td>39</td></tr>
+					<tr><td>student46</td><td>Languages</td><td>female</td><td>4</td><td>8</td><td>12</td><td>10</td></tr>
+					<tr><td>student47</td><td>Mathematics</td><td>male</td><td>89</td><td>10</td><td>6</td><td>11</td></tr>
+					<tr><td>student48</td><td>Languages</td><td>female</td><td>90</td><td>32</td><td>21</td><td>18</td></tr>
+					<tr><td>student49</td><td>Mathematics</td><td>male</td><td>42</td><td>49</td><td>49</td><td>72</td></tr>
+					<tr><td>student50</td><td>Languages</td><td>female</td><td>56</td><td>37</td><td>67</td><td>54</td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>
